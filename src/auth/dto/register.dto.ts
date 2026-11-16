@@ -7,12 +7,12 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
-  @ApiProperty({ example: 'Budi Santoso', description: 'Nama lengkap customer' })
+  @ApiProperty({ example: 'cukamhihu', description: 'Nama lengkap customer' })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ example: 'budi@gmail.com', description: 'Email unik customer' })
+  @ApiProperty({ example: 'cukamhihu@gmail.com', description: 'Email unik customer' })
   @IsEmail()
   email!: string;
 

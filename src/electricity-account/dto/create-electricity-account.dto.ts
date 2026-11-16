@@ -6,22 +6,22 @@ export class CreateElectricityAccountDto {
   @ApiProperty({ example: 'abaf8740-b8f5-491c-ad31-8da142dc6676', description: 'ID Layanan Listrik' })
   @IsString()
   @IsNotEmpty()
-  electricityServiceId: string;
+  electricityServiceId!: string;
 
   @ApiProperty({ example: 'PLN123456789', description: 'Nomor Pelanggan Listrik unik' })
   @IsString()
   @IsNotEmpty()
-  customerNumber: string;
+  customerNumber!: string;
 
-  @ApiProperty({ example: 'Budi Santoso', description: 'Nama Pelanggan di rekening listrik' })
+  @ApiProperty({ example: 'hihucukam', description: 'Nama Pelanggan di rekening listrik' })
   @IsString()
   @IsNotEmpty()
-  customerName: string;
+  customerName!: string;
 
   @ApiProperty({ example: 'Jl. Merdeka No. 45, Jakarta', description: 'Alamat pelanggan listrik' })
   @IsString()
   @IsNotEmpty()
-  address: string;
+  address!: string;
 
   @ApiPropertyOptional({ enum: ElectricityAccountStatus, example: 'ACTIVE', description: 'Status akun listrik' })
   @IsEnum(ElectricityAccountStatus)
