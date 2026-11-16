@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(uuid()) @db.VarChar(36)
+  name              String             @db.VarChar(100)
+  email             String             @unique @db.VarChar(150)
+  password          String             @db.VarChar(255)
+  role              Role               @default(CUSTOMER)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+  electricityAccounts ElectricityAccount[]
+  verifiedPayments  Payment[]          @relation("PaymentVerifiedBy")
+
+  @@map("users")
+}
+
+model ElectricityService {
+  id          String               @id @default(uuid()) @db.VarChar(36)
+  code        String               @unique @db.VarChar(20)
+  name        String               @db.VarChar(100)
+  powerVa     Int                  @map("power_va")
+  pricePerKwh Decimal              @map("price_per_kwh") @db.Decimal(12, 2)
+  isActive    Boolean              @default(true) @map("is_active")
+  createdAt   DateTime             @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.DateTime(0)
+  accounts    ElectricityAccount[]
+
+  @@map("electricity_services")
+}
+
+model ElectricityAccount {
+  id                 String                   @id @default(uuid()) @db.VarChar(36)
+  userId             String                   @map("user_id") @db.VarChar(36)
+  electricityServiceId String                 @map("electricity_service_id") @db.VarChar(36)
+  customerNumber     String                   @unique @map("customer_number") @db.VarChar(30)
+  customerName       String                   @map("customer_name") @db.VarChar(100)
+  address            String                   @db.Text
+  status             ElectricityAccountStatus @default(ACTIVE)
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.DateTime(0)
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  electricityService ElectricityService       @relation(fields: [electricityServiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  billings           Billing[]
+
+  @@index([userId])
+  @@index([electricityServiceId])
+  @@map("electricity_accounts")
+}
+
+model Billing {
+  id                 String             @id @default(uuid()) @db.VarChar(36)
+  electricityAccountId String            @map("electricity_account_id") @db.VarChar(36)
+  periodMonth        Int                 @map("period_month")
+  periodYear         Int                 @map("period_year")
+  previousMeter      Decimal             @map("previous_meter") @db.Decimal(12, 2)
+  currentMeter       Decimal             @map("current_meter") @db.Decimal(12, 2)
+  consumption        Decimal             @db.Decimal(12, 2)
+  tariffPerKwh       Decimal             @map("tariff_per_kwh") @db.Decimal(12, 2)
+  amount             Decimal             @db.Decimal(12, 2)
+  dueDate            DateTime            @map("due_date") @db.Date
+  status             BillingStatus       @default(UNPAID)
+  createdAt          DateTime            @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
+  electricityAccount ElectricityAccount  @relation(fields: [electricityAccountId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  payment            Payment?
+
+  @@unique([electricityAccountId, periodMonth, periodYear])
+  @@index([status, dueDate])
+  @@map("billings")
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.VarChar(36)
+  billingId   String        @unique @map("billing_id") @db.VarChar(36)
+  paymentProof String       @map("payment_proof") @db.VarChar(255)
+  status      PaymentStatus @default(PENDING)
+  verifiedBy  String?       @map("verified_by") @db.VarChar(36)
+  verifiedAt  DateTime?     @map("verified_at") @db.DateTime(0)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.DateTime(0)
+  billing     Billing       @relation(fields: [billingId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  verifier    User?         @relation("PaymentVerifiedBy", fields: [verifiedBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([status])
+  @@index([verifiedBy])
+  @@map("payments")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum ElectricityAccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BillingStatus {
+  UNPAID
+  WAITING_VERIFICATION
+  PAID
+  OVERDUE
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
